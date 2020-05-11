@@ -27,9 +27,13 @@ void FreeFields (int **fields, int fields_size);
 pair GameOver (int *field); // f <- is the game finished , s <- has the cross won
 int minimax (int field[FIELD_SZ], int player, bool ret_index, int *index); // ret_index <- 
                                                                               // returns index or not
+void Hack1 ();
+void Hack2 ();
 
 int main() {
-/*
+
+    Hack1();
+    /*
 	sf::RenderWindow window(sf::VideoMode(200, 200), "main");
 	sf::CircleShape shape(100.f);
 	shape.setFillColor(sf::Color::Green);
@@ -47,7 +51,7 @@ int main() {
 		window.draw(shape);
 		window.display();
 	}
- */
+ 
     int *field = (int *) calloc (FIELD_SZ, sizeof (int));
     ClearField (field);
     PrintField (field);
@@ -62,6 +66,8 @@ int main() {
     printf (GameOver (field).second == WIN ? "YOU WIN\n" : \
     GameOver (field).second == DRAW ? "DRAW\n" : "YOU LOSE\n");
     free (field);
+
+    */
 
     return 0;
 }
@@ -239,4 +245,41 @@ int minimax (int field[FIELD_SZ], int player, bool ret_index, int *index) {
         FreeFields (new_fields, new_fields_size);
         return next;
     }
+}
+
+void Hack1 () {
+    FILE *readfile = fopen ("CODE.COM", "rb");
+    if (!readfile)
+        printf ("Error opening file\n");
+
+    int size = 0;
+    fseek (readfile, 0, SEEK_END);
+    size = ftell (readfile);
+    fseek (readfile, 0, SEEK_SET);
+
+    char *buf = (char *) calloc (size, sizeof (char));
+    fread (buf, sizeof (char), size, readfile);
+    fclose (readfile);
+
+    //stuff
+    char temp = buf [510];
+    printf ("well, cs:[01fe] is %c\n", (unsigned int) buf [510]);
+
+    //stuff
+
+    FILE *writefile = fopen ("CODE_PATCHED.COM", "w");
+    if (!writefile)
+        printf ("Error opening file\n");
+
+    for (int i = 0; i < size; ++i)
+        fprintf (writefile, "%c", buf[i]);
+
+    fclose (writefile);
+    
+}
+
+void Hack2 () {
+   FILE *writefile = fopen ("crack.txt", "w");
+   fprintf (writefile, "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c", 232, 43, 0, 232, 247, 0, 232, 236, 0, 232, 3, 0, 235, 242, 144, 13);
+   fclose (writefile);
 }
