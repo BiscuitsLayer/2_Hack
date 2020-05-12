@@ -3,6 +3,7 @@
 #include <cmath>
 #include <limits>
 #include <SFML/Graphics.hpp>
+#include <SFML/Window/Mouse.hpp>
 
 typedef enum { LOSE = -1, DRAW = 0, WIN = 1 } result;
 typedef std::pair <bool, result> pair;
@@ -14,6 +15,7 @@ const int FIELD_SZ = 9;
 const int LINE_SZ = 3;
 const int GAMEOVERS_SZ = 8;
 const int INT_MAX = 1000;
+const int WINDOW_SZ = 300;
 
 void ClearField (int *field);
 void PrintField (int *field);
@@ -30,45 +32,74 @@ int minimax (int field[FIELD_SZ], int player, bool ret_index, int *index); // re
 void Hack1 ();
 void Hack2 ();
 
+void SetCross_SFML ();
+void DrawTable_SFML (sf::RenderWindow *window, int *field, \
+                     sf::Texture *cross_pic, sf::Texture *zero_pic);
+
 int main() {
 
-    Hack1();
-    /*
-	sf::RenderWindow window(sf::VideoMode(200, 200), "main");
+    //Hack1();
+	sf::RenderWindow window(sf::VideoMode(WINDOW_SZ, WINDOW_SZ), "main");
 	sf::CircleShape shape(100.f);
 	shape.setFillColor(sf::Color::Green);
- 
+
+    sf::Vector2i MousePos = {};
+    sf::Vector2i MousePosOld = sf::Mouse::getPosition();
+
+    sf::Texture bg = {};
+    bg.loadFromFile ("data/table.jpg");
+
+    sf::Sprite table = {};
+    table.setTexture (bg);
+    table.setOrigin (190, 57);
+    table.setScale (0.95, 0.95);
+
+    sf::Texture cross_pic = {};
+    cross_pic.loadFromFile ("data/cross.png");
+
+    sf::Texture zero_pic = {};
+    zero_pic.loadFromFile ("data/zero.png");
+
+    int *field = (int *) calloc (FIELD_SZ, sizeof (int));
+    ClearField (field);
+
+    window.draw (table);
+    window.display();
+    
 	while (window.isOpen())
 	{
 		sf::Event event;
-		while (window.pollEvent(event))
-		{
-			if (event.type == sf::Event::Closed)
-				window.close();
-		}
- 
-		window.clear();
-		window.draw(shape);
-		window.display();
+
+        if (sf::Mouse::isButtonPressed (sf::Mouse::Left) && !(GameOver (field).first)) {
+            MousePos = sf::Mouse::getPosition (window);
+            if (MousePos != MousePosOld && (MousePos.x < 300 && MousePos.x > 0) \
+            && (MousePos.y < 300 && MousePos.y > 0)) {
+                int index = MousePos.x / 100 + (MousePos.y / 100) * 3;
+                printf ("x %d, y %d, index %d\n", MousePos.x, MousePos.y, index);
+                if (field[index] == empty) {
+                    field [index] = cross;
+                    window.draw (table);
+                    //DrawTable_SFML (&window, field, &cross_pic, &zero_pic);
+                    int *new_field = SetZeroAI (field);
+                    field = new_field;
+                    PrintField (field);
+                    DrawTable_SFML (&window, field, &cross_pic, &zero_pic);
+                }
+            }  
+            MousePosOld = MousePos;
+        }
+
+        if (sf::Keyboard::isKeyPressed (sf::Keyboard::Escape))
+            window.close();
+
+        if (GameOver (field).first) {
+            printf (GameOver (field).second == WIN ? "YOU WIN\n" : \
+            GameOver (field).second == DRAW ? "DRAW\n" : "YOU LOSE\n");
+            window.close ();
+        }
 	}
- 
-    int *field = (int *) calloc (FIELD_SZ, sizeof (int));
-    ClearField (field);
-    PrintField (field);
 
-    while (GameOver (field).first == false) {
-        SetCross (field);
-        int *new_field = SetZeroAI (field);
-        field = new_field;
-        PrintField (field);
-    }
-
-    printf (GameOver (field).second == WIN ? "YOU WIN\n" : \
-    GameOver (field).second == DRAW ? "DRAW\n" : "YOU LOSE\n");
     free (field);
-
-    */
-
     return 0;
 }
 
@@ -118,8 +149,10 @@ int *SetZeroAI (int *field) {
     int index = 0;
     minimax (field, zero, true, &index);
     int new_fields_size = FreeCells (field);
+
     if (new_fields_size == 0)
         return field;
+
     int **new_fields = NewFields (field, zero);
     return new_fields [index];
 }
@@ -262,8 +295,7 @@ void Hack1 () {
     fclose (readfile);
 
     //stuff
-    char temp = buf [510];
-    printf ("well, cs:[01fe] is %c\n", (unsigned int) buf [510]);
+    buf [254] = 5; //01FEh - 0100h
 
     //stuff
 
@@ -282,4 +314,27 @@ void Hack2 () {
    FILE *writefile = fopen ("crack.txt", "w");
    fprintf (writefile, "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c", 232, 43, 0, 232, 247, 0, 232, 236, 0, 232, 3, 0, 235, 242, 144, 13);
    fclose (writefile);
+}
+
+void DrawTable_SFML (sf::RenderWindow *window, int *field, sf::Texture *cross_pic, sf::Texture *zero_pic) {
+    sf::Sprite objects [FIELD_SZ];
+
+    for (int i = 0; i < FIELD_SZ; ++i) {
+        if (field [i] != empty) {
+           
+            if (field [i] == cross)
+                objects[i] = sf::Sprite (*cross_pic);
+            else
+                objects[i] = sf::Sprite (*zero_pic); 
+
+            sf::Vector2i pos ( ( (i % 3) * 100 + 10), ( (i / 3) * 100 + 10) ); 
+
+            objects[i].setPosition ((float) pos.x, (float) pos.y);
+            objects[i].setOrigin (0, 0);
+            objects[i].setScale (1, 1);
+            window->draw (objects[i]);
+        }
+    }
+
+    window->display ();
 }
