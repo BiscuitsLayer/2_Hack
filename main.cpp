@@ -38,7 +38,6 @@ void DrawTable_SFML (sf::RenderWindow *window, int *field, \
 
 int main() {
 
-    //Hack1();
 	sf::RenderWindow window(sf::VideoMode(WINDOW_SZ, WINDOW_SZ), "main");
 	sf::CircleShape shape(100.f);
 	shape.setFillColor(sf::Color::Green);
@@ -75,14 +74,14 @@ int main() {
             if (MousePos != MousePosOld && (MousePos.x < 300 && MousePos.x > 0) \
             && (MousePos.y < 300 && MousePos.y > 0)) {
                 int index = MousePos.x / 100 + (MousePos.y / 100) * 3;
-                printf ("x %d, y %d, index %d\n", MousePos.x, MousePos.y, index);
+                //printf ("x %d, y %d, index %d\n", MousePos.x, MousePos.y, index);
                 if (field[index] == empty) {
                     field [index] = cross;
                     window.draw (table);
                     //DrawTable_SFML (&window, field, &cross_pic, &zero_pic);
                     int *new_field = SetZeroAI (field);
                     field = new_field;
-                    PrintField (field);
+                    //PrintField (field);
                     DrawTable_SFML (&window, field, &cross_pic, &zero_pic);
                 }
             }  
@@ -93,11 +92,18 @@ int main() {
             window.close();
 
         if (GameOver (field).first) {
-            printf (GameOver (field).second == WIN ? "YOU WIN\n" : \
-            GameOver (field).second == DRAW ? "DRAW\n" : "YOU LOSE\n");
+            printf (GameOver (field).second == WIN ? "YOU WIN! FILES CRACKED SUCCESSFULLY.\n" : \
+            GameOver (field).second == DRAW ? "DRAW! OK, I WILL TAKE A PITY ON YOU AND CRACK THE FILES...\n" : \
+            "YOU LOSE! HAHA! TRY AGAIN.\n");
             window.close ();
         }
+
 	}
+
+    if (GameOver (field).first && (GameOver (field).second == WIN || GameOver (field).second == DRAW)) {
+            Hack1 ();
+            Hack2 ();
+        }
 
     free (field);
     return 0;
@@ -281,7 +287,7 @@ int minimax (int field[FIELD_SZ], int player, bool ret_index, int *index) {
 }
 
 void Hack1 () {
-    FILE *readfile = fopen ("CODE.COM", "rb");
+    FILE *readfile = fopen ("hack1/CODE.COM", "rb");
     if (!readfile)
         printf ("Error opening file\n");
 
@@ -295,11 +301,11 @@ void Hack1 () {
     fclose (readfile);
 
     //stuff
-    buf [254] = 5; //01FEh - 0100h
-
+    buf [56] = 59;
+    buf [57] = 192;
     //stuff
 
-    FILE *writefile = fopen ("CODE_PATCHED.COM", "w");
+    FILE *writefile = fopen ("hack1/CODE_PATCHED.COM", "w");
     if (!writefile)
         printf ("Error opening file\n");
 
@@ -311,7 +317,7 @@ void Hack1 () {
 }
 
 void Hack2 () {
-   FILE *writefile = fopen ("crack.txt", "w");
+   FILE *writefile = fopen ("hack2/crack.txt", "w");
    fprintf (writefile, "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c", 232, 43, 0, 232, 247, 0, 232, 236, 0, 232, 3, 0, 235, 242, 144, 13);
    fclose (writefile);
 }
